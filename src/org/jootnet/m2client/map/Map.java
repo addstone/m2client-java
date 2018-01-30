@@ -239,7 +239,7 @@ public abstract class Map implements Drawable {
 						if(tex == null) {
 							tileIdx.add((int) mti.getBngImgIdx());
 						} else {
-							mapBaseTex.blendNormal(tex, new Point(cpx, cpy - PIXEL_HEIGHT_PER_TILE), 1);
+							mapBaseTex.blendNormal(tex, new Point(cpx, cpy), 1);
 						}
 					}
 					if (mti.isHasMid()) {
@@ -247,7 +247,7 @@ public abstract class Map implements Drawable {
 						if(tex == null) {
 							smTileIdx.add((int) mti.getMidImgIdx());
 						} else {
-							mapBaseTex.blendNormal(tex, new Point(cpx, cpy + tex.getOffsetY()), 1);
+							mapBaseTex.blendNormal(tex, new Point(cpx, cpy), 1);
 						}
 					}
 				}
@@ -325,7 +325,7 @@ public abstract class Map implements Drawable {
 							break;
 						}
 					} else {
-						mapTex.blendAdd(t, new Point(cpx + t.getOffsetX(), cpy - t.getHeight() + t.getOffsetY()));
+						mapTex.blendAdd(t, new Point(cpx + t.getOffsetX(), cpy - t.getHeight() + t.getOffsetY() + PIXEL_HEIGHT_PER_TILE));
 					}
 				} else if (mti.isHasObj()) {
 					String objFileName = "Objects";
@@ -381,7 +381,7 @@ public abstract class Map implements Drawable {
 							break;
 						}
 					} else {
-						mapTex.blendNormalTransparent(t, new Point(cpx, cpy - t.getHeight()), 1, (byte)0, (byte)0, (byte)0);
+						mapTex.blendNormalTransparent(t, new Point(cpx, cpy - t.getHeight() + PIXEL_HEIGHT_PER_TILE), 1, (byte)0, (byte)0, (byte)0);
 					}
 				}
 			}
