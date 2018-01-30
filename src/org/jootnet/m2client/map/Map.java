@@ -26,11 +26,11 @@ public abstract class Map implements Drawable {
 	 */
 	private final static byte PIXEL_HEIGHT_PER_TILE = 32;
 	/** 绘制地图时向左延伸块儿数量 */
-	private final static byte EXTEND_LEFT = 5;
+	private final static byte EXTEND_LEFT = 50;
 	/** 绘制地图时向右延伸块儿数量 */
-	private final static byte EXTEND_RIGHT = 5;
+	private final static byte EXTEND_RIGHT = 50;
 	/** 绘制地图时向下延伸块儿数量 */
-	private final static byte EXTEND_BOTTOM = 5;
+	private final static byte EXTEND_BOTTOM = 50;
 	
 	/** 地图宽度 */
 	private int mw;
@@ -76,6 +76,10 @@ public abstract class Map implements Drawable {
 	 * 纹理图片需要准备的右下角行数
 	 */
 	private short phe;
+	
+	public MapInfo info() {
+		return info;
+	}
 	
 	private String name;
 	private MapInfo info;
@@ -235,15 +239,15 @@ public abstract class Map implements Drawable {
 						if(tex == null) {
 							tileIdx.add((int) mti.getBngImgIdx());
 						} else {
-							mapBaseTex.blendNormal(tex, new Point(cpx, cpy), 1);
+							mapBaseTex.blendNormal(tex, new Point(cpx, cpy - PIXEL_HEIGHT_PER_TILE), 1);
 						}
 					}
 					if (mti.isHasMid()) {
-						Texture tex = Textures.getTextureFromCache("SmTiles", mti.getBngImgIdx());
+						Texture tex = Textures.getTextureFromCache("SmTiles", mti.getMidImgIdx());
 						if(tex == null) {
-							smTileIdx.add((int) mti.getBngImgIdx());
+							smTileIdx.add((int) mti.getMidImgIdx());
 						} else {
-							mapBaseTex.blendNormal(tex, new Point(cpx, cpy), 1);
+							mapBaseTex.blendNormal(tex, new Point(cpx, cpy + tex.getOffsetY()), 1);
 						}
 					}
 				}
