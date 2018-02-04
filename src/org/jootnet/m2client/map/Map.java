@@ -13,6 +13,11 @@ import org.jootnet.m2client.texture.internal.Textures;
 
 public abstract class Map implements Drawable {
 	
+	// 不可移动标记块儿索引
+	private final static int SMTILE_WALK_N = 58;
+	// 不可飞跃标记块儿索引
+	private final static int SMTILE_FLY_N = 59;
+	
 	/**
 	 * 地图磁块宽
 	 * <br>
@@ -222,6 +227,14 @@ public abstract class Map implements Drawable {
 		obj13Idx.clear();
 		obj14Idx.clear();
 		obj15Idx.clear();
+		Texture tmp_tex = Textures.getTextureFromCache("SmTiles", SMTILE_WALK_N);
+		if(tmp_tex == null) {
+			smTileIdx.add(SMTILE_WALK_N);
+		}
+		tmp_tex = Textures.getTextureFromCache("SmTiles", SMTILE_FLY_N);
+		if(tmp_tex == null) {
+			smTileIdx.add(SMTILE_FLY_N);
+		}
 		// 对于地图数据，如果绘制的第一列为奇数，则大地砖不会显示，此处将绘制区域向左移，保证大地砖和动态地图/光线等正确绘制
 		int left = tws - EXTEND_LEFT;
 		if(left < 0)
@@ -325,7 +338,10 @@ public abstract class Map implements Drawable {
 							break;
 						}
 					} else {
-						mapTex.blendAdd(t, new Point(cpx + t.getOffsetX(), cpy - t.getHeight() + t.getOffsetY() + PIXEL_HEIGHT_PER_TILE));
+						if(mti.isAniBlendMode())
+							mapTex.blendAdd(t, new Point(cpx + t.getOffsetX(), cpy - t.getHeight() + t.getOffsetY() + PIXEL_HEIGHT_PER_TILE));
+						else
+							mapTex.blendNormalTransparent(t, new Point(cpx + t.getOffsetX(), cpy - t.getHeight() + t.getOffsetY() + PIXEL_HEIGHT_PER_TILE), 1, (byte)0, (byte)0, (byte)0);
 					}
 				} else if (mti.isHasObj()) {
 					String objFileName = "Objects";
@@ -386,6 +402,28 @@ public abstract class Map implements Drawable {
 				}
 			}
 		}
+		
+		// 绘制可移动标记
+		for(int w = left; w < twe; ++w) {
+			for (int h = ths; h < the; ++h) {
+				MapTileInfo mti = info.getTiles()[w][h];
+				// 绘制左上角x
+				int cpx = (int) (px + (w - tws) * PIXEL_WIDTH_PER_TILE);
+				// 绘制左上角y
+				int cpy = (int) (py + (h - ths) * PIXEL_HEIGHT_PER_TILE);
+				if(!mti.isCanWalk()) {
+					Texture tn_walk = Textures.getTextureFromCache("SmTiles", SMTILE_WALK_N);
+					if(tn_walk !=null)
+						mapTex.blendNormalTransparent(tn_walk, new Point(cpx, cpy), 1, (byte)0, (byte)0, (byte)0);
+				}
+				if(!mti.isCanFly()) {
+					Texture tn_fly = Textures.getTextureFromCache("SmTiles", SMTILE_FLY_N);
+					if(tn_fly !=null)
+						mapTex.blendNormalTransparent(tn_fly, new Point(cpx, cpy), 1, (byte)0, (byte)0, (byte)0);
+				}
+			}
+		}
+		
 		Textures.loadTextureAsync("Tiles", tileIdx);
 		Textures.loadTextureAsync("SmTiles", smTileIdx);
 		Textures.loadTextureAsync("Objects", obj0Idx);
