@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 import org.jootnet.m2client.graphics.GraphicsContext;
+import org.jootnet.m2client.graphics.texture.Textures;
 import org.jootnet.m2client.map.Map;
 
 public class GamePanel extends JPanel implements ActionListener {
@@ -82,7 +83,7 @@ public class GamePanel extends JPanel implements ActionListener {
 	public GamePanel(Map map) {
 		this.map = map;
 		ctx = new GraphicsContextImpl();
-		lblFPS.setSize(60, 28);
+		lblFPS.setSize(600, 28);
 		lblFPS.setLocation(20, 20);
 		lblFPS.setForeground(Color.WHITE);
 		setLayout(null);
@@ -93,7 +94,7 @@ public class GamePanel extends JPanel implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
 		ctx.updateTime();
-		lblFPS.setText("FPS: " + ctx.fps);
+		lblFPS.setText(String.format("地图名称: %s FPS:%d", map.name(), ctx.fps));
 		repaint();
 	}
 	
@@ -101,7 +102,7 @@ public class GamePanel extends JPanel implements ActionListener {
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		if(map.adjust(ctx)) {
-			g.drawImage(map.content().toBufferedImage(false), map.offsetX(), map.offsetY(), null);
+			g.drawImage(Textures.toBufferedImage(map.content(), false), map.offsetX(), map.offsetY(), null);
 		}
 	}
 }

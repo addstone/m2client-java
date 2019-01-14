@@ -1,15 +1,16 @@
 package org.jootnet.m2client.map;
 
-import java.awt.Point;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 import org.jootnet.m2client.graphics.Drawable;
 import org.jootnet.m2client.graphics.GraphicsContext;
-import org.jootnet.m2client.map.internal.MapInfo;
-import org.jootnet.m2client.map.internal.MapTileInfo;
-import org.jootnet.m2client.texture.Texture;
-import org.jootnet.m2client.texture.internal.Textures;
+import org.jootnet.m2client.graphics.texture.Textures;
+
+import com.github.jootnet.mir2.core.Texture;
+import com.github.jootnet.mir2.core.image.ImageInfo;
+import com.github.jootnet.mir2.core.map.MapTileInfo;
 
 public abstract class Map implements Drawable {
 	
@@ -82,13 +83,16 @@ public abstract class Map implements Drawable {
 	 */
 	private short phe;
 	
-	public MapInfo info() {
+	public com.github.jootnet.mir2.core.map.Map info() {
 		return info;
 	}
 	
 	private String name;
-	private MapInfo info;
-	protected Map(String name, MapInfo info) {
+	public String name() {
+		return name;
+	}
+	private com.github.jootnet.mir2.core.map.Map info;
+	public Map(String name, com.github.jootnet.mir2.core.map.Map info) {
 		this.name = name;
 		this.info = info;
 		// 地图宽度(像素)
@@ -131,29 +135,13 @@ public abstract class Map implements Drawable {
 	
 	private Texture mapTex = null;
 	private Texture mapBaseTex = null;
-	private List<Integer> tileIdx = new ArrayList<Integer>();
-	private List<Integer> smTileIdx = new ArrayList<Integer>();
-	private List<Integer> obj0Idx = new ArrayList<Integer>();
-	private List<Integer> obj2Idx = new ArrayList<Integer>();
-	private List<Integer> obj3Idx = new ArrayList<Integer>();
-	private List<Integer> obj4Idx = new ArrayList<Integer>();
-	private List<Integer> obj5Idx = new ArrayList<Integer>();
-	private List<Integer> obj6Idx = new ArrayList<Integer>();
-	private List<Integer> obj7Idx = new ArrayList<Integer>();
-	private List<Integer> obj8Idx = new ArrayList<Integer>();
-	private List<Integer> obj9Idx = new ArrayList<Integer>();
-	private List<Integer> obj10Idx = new ArrayList<Integer>();
-	private List<Integer> obj11Idx = new ArrayList<Integer>();
-	private List<Integer> obj12Idx = new ArrayList<Integer>();
-	private List<Integer> obj13Idx = new ArrayList<Integer>();
-	private List<Integer> obj14Idx = new ArrayList<Integer>();
-	private List<Integer> obj15Idx = new ArrayList<Integer>();
+	private java.util.Map<String, List<Integer>> ilIdxs = new Hashtable<>();
 	@Override
 	public boolean adjust(GraphicsContext ctx) {
 		if(mapBaseTex == null || mapBaseTex.getWidth() != ctx.getWidth() || mapBaseTex.getHeight() != ctx.getHeight()) {
 			mapBaseTex = new Texture(new byte[ctx.getWidth() * ctx.getHeight() * 3], (short)ctx.getWidth(), (short)ctx.getHeight());
 		}
-		boolean baseCompleted = tileIdx.isEmpty() && smTileIdx.isEmpty(); // 地图前两层不需每次重绘，使用缓冲
+		boolean baseCompleted = ilIdxs.keySet().parallelStream().filter(ilName -> ilName.toLowerCase().startsWith("tiles") || ilName.toLowerCase().startsWith("smtiles")).count() == 0; // 地图前两层不需每次重绘，使用缓冲
 		if(moved) {
 			// 计算绘制区域左上角坐标
 			// 绘制区域左上角x
@@ -209,31 +197,16 @@ public abstract class Map implements Drawable {
 			baseCompleted = false;
 		}
 		
-		// 绘制，并加入缓存
-		tileIdx.clear();
-		smTileIdx.clear();
-		obj0Idx.clear();
-		obj2Idx.clear();
-		obj3Idx.clear();
-		obj4Idx.clear();
-		obj5Idx.clear();
-		obj6Idx.clear();
-		obj7Idx.clear();
-		obj8Idx.clear();
-		obj9Idx.clear();
-		obj10Idx.clear();
-		obj11Idx.clear();
-		obj12Idx.clear();
-		obj13Idx.clear();
-		obj14Idx.clear();
-		obj15Idx.clear();
+		ilIdxs.clear();
 		Texture tmp_tex = Textures.getTextureFromCache("SmTiles", SMTILE_WALK_N);
 		if(tmp_tex == null) {
-			smTileIdx.add(SMTILE_WALK_N);
+			ilIdxs.putIfAbsent("SmTiles", new ArrayList<>());
+			ilIdxs.get("SmTiles").add(SMTILE_WALK_N);
 		}
 		tmp_tex = Textures.getTextureFromCache("SmTiles", SMTILE_FLY_N);
 		if(tmp_tex == null) {
-			smTileIdx.add(SMTILE_FLY_N);
+			ilIdxs.putIfAbsent("SmTiles", new ArrayList<>());
+			ilIdxs.get("SmTiles").add(SMTILE_FLY_N);
 		}
 		// 对于地图数据，如果绘制的第一列为奇数，则大地砖不会显示，此处将绘制区域向左移，保证大地砖和动态地图/光线等正确绘制
 		int left = tws - EXTEND_LEFT;
@@ -248,19 +221,23 @@ public abstract class Map implements Drawable {
 					// 绘制左上角y
 					int cpy = (int) (py + (h - ths) * PIXEL_HEIGHT_PER_TILE);
 					if (mti.isHasBng()) {
-						Texture tex = Textures.getTextureFromCache("Tiles", mti.getBngImgIdx());
+						String tileFileName = "Tiles"+(mti.getBngFileIdx()==0?"":mti.getBngFileIdx());
+						Texture tex = Textures.getTextureFromCache(tileFileName, mti.getBngImgIdx());
 						if(tex == null) {
-							tileIdx.add((int) mti.getBngImgIdx());
+							ilIdxs.putIfAbsent(tileFileName, new ArrayList<>());
+							ilIdxs.get(tileFileName).add((int) mti.getBngImgIdx());
 						} else {
-							mapBaseTex.blendNormal(tex, new Point(cpx, cpy), 1);
+							mapBaseTex.blendNormal(tex, cpx, cpy, 1);
 						}
 					}
 					if (mti.isHasMid()) {
-						Texture tex = Textures.getTextureFromCache("SmTiles", mti.getMidImgIdx());
+						String smTileFileName = "SmTiles"+(mti.getMidFileIdx()==0?"":mti.getMidFileIdx());
+						Texture tex = Textures.getTextureFromCache(smTileFileName, mti.getMidImgIdx());
 						if(tex == null) {
-							smTileIdx.add((int) mti.getMidImgIdx());
+							ilIdxs.putIfAbsent(smTileFileName, new ArrayList<>());
+							ilIdxs.get(smTileFileName).add((int) mti.getMidImgIdx());
 						} else {
-							mapBaseTex.blendNormal(tex, new Point(cpx, cpy), 1);
+							mapBaseTex.blendNormal(tex, cpx, cpy, 1);
 						}
 					}
 				}
@@ -268,7 +245,12 @@ public abstract class Map implements Drawable {
 		}
 		
 		if(mapTex == null)
-			mapTex = (Texture) mapBaseTex.clone();
+			try {
+				mapTex = (Texture) mapBaseTex.clone();
+			} catch (CloneNotSupportedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		else
 			mapBaseTex.copyTo(mapTex);
 		// 绘制完地砖后再绘制对象层
@@ -290,58 +272,14 @@ public abstract class Map implements Drawable {
 						objFileName += mti.getObjFileIdx();
 					Texture t = Textures.getTextureFromCache(objFileName, mti.getObjImgIdx() + ati);
 					if(t == null) {
-						switch(mti.getObjFileIdx()) {
-						case 0:
-							obj0Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 2:
-							obj2Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 3:
-							obj3Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 4:
-							obj4Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 5:
-							obj5Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 6:
-							obj6Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 7:
-							obj7Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 8:
-							obj8Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 9:
-							obj9Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 10:
-							obj10Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 11:
-							obj11Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 12:
-							obj12Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 13:
-							obj13Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 14:
-							obj14Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						case 15:
-							obj15Idx.add(mti.getObjImgIdx() + ati);
-							break;
-						}
+						ilIdxs.putIfAbsent(objFileName, new ArrayList<>());
+						ilIdxs.get(objFileName).add(mti.getObjImgIdx() + ati);
 					} else {
+						ImageInfo ii = Textures.getImageInfoImmediately(objFileName, mti.getObjImgIdx() + ati);
 						if(mti.isAniBlendMode())
-							mapTex.blendAdd(t, new Point(cpx + t.getOffsetX(), cpy - t.getHeight() + t.getOffsetY() + PIXEL_HEIGHT_PER_TILE));
+							mapTex.blendAdd(t, cpx + ii.getOffsetX(), cpy - t.getHeight() + ii.getOffsetY() + PIXEL_HEIGHT_PER_TILE);
 						else
-							mapTex.blendNormalTransparent(t, new Point(cpx + t.getOffsetX(), cpy - t.getHeight() + t.getOffsetY() + PIXEL_HEIGHT_PER_TILE), 1, (byte)0, (byte)0, (byte)0);
+							mapTex.blendNormalTransparent(t, cpx + ii.getOffsetX(), cpy - t.getHeight() + ii.getOffsetY() + PIXEL_HEIGHT_PER_TILE, 1, (byte)0, (byte)0, (byte)0);
 					}
 				} else if (mti.isHasObj()) {
 					String objFileName = "Objects";
@@ -349,55 +287,10 @@ public abstract class Map implements Drawable {
 						objFileName += mti.getObjFileIdx();
 					Texture t = Textures.getTextureFromCache(objFileName, mti.getObjImgIdx());
 					if(t == null) {
-						switch(mti.getObjFileIdx()) {
-						case 0:
-							obj0Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 2:
-							obj2Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 3:
-							obj3Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 4:
-							obj4Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 5:
-							obj5Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 6:
-							obj6Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 7:
-							obj7Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 8:
-							obj8Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 9:
-							obj9Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 10:
-							obj10Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 11:
-							obj11Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 12:
-							obj12Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 13:
-							obj13Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 14:
-							obj14Idx.add((int) mti.getObjImgIdx());
-							break;
-						case 15:
-							obj15Idx.add((int) mti.getObjImgIdx());
-							break;
-						}
+						ilIdxs.putIfAbsent(objFileName, new ArrayList<>());
+						ilIdxs.get(objFileName).add((int) mti.getObjImgIdx());
 					} else {
-						mapTex.blendNormalTransparent(t, new Point(cpx, cpy - t.getHeight() + PIXEL_HEIGHT_PER_TILE), 1, (byte)0, (byte)0, (byte)0);
+						mapTex.blendNormalTransparent(t, cpx, cpy - t.getHeight() + PIXEL_HEIGHT_PER_TILE, 1, (byte)0, (byte)0, (byte)0);
 					}
 				}
 			}
@@ -414,33 +307,17 @@ public abstract class Map implements Drawable {
 				if(!mti.isCanWalk()) {
 					Texture tn_walk = Textures.getTextureFromCache("SmTiles", SMTILE_WALK_N);
 					if(tn_walk !=null)
-						mapTex.blendNormalTransparent(tn_walk, new Point(cpx, cpy), 1, (byte)0, (byte)0, (byte)0);
+						mapTex.blendNormalTransparent(tn_walk, cpx, cpy, 1, (byte)0, (byte)0, (byte)0);
 				}
 				if(!mti.isCanFly()) {
 					Texture tn_fly = Textures.getTextureFromCache("SmTiles", SMTILE_FLY_N);
 					if(tn_fly !=null)
-						mapTex.blendNormalTransparent(tn_fly, new Point(cpx, cpy), 1, (byte)0, (byte)0, (byte)0);
+						mapTex.blendNormalTransparent(tn_fly, cpx, cpy, 1, (byte)0, (byte)0, (byte)0);
 				}
 			}
 		}
 		
-		Textures.loadTextureAsync("Tiles", tileIdx);
-		Textures.loadTextureAsync("SmTiles", smTileIdx);
-		Textures.loadTextureAsync("Objects", obj0Idx);
-		Textures.loadTextureAsync("Objects2", obj2Idx);
-		Textures.loadTextureAsync("Objects3", obj3Idx);
-		Textures.loadTextureAsync("Objects4", obj4Idx);
-		Textures.loadTextureAsync("Objects5", obj5Idx);
-		Textures.loadTextureAsync("Objects6", obj6Idx);
-		Textures.loadTextureAsync("Objects7", obj7Idx);
-		Textures.loadTextureAsync("Objects8", obj8Idx);
-		Textures.loadTextureAsync("Objects9", obj9Idx);
-		Textures.loadTextureAsync("Objects10", obj10Idx);
-		Textures.loadTextureAsync("Objects11", obj11Idx);
-		Textures.loadTextureAsync("Objects12", obj12Idx);
-		Textures.loadTextureAsync("Objects13", obj13Idx);
-		Textures.loadTextureAsync("Objects14", obj14Idx);
-		Textures.loadTextureAsync("Objects15", obj15Idx);
+		ilIdxs.entrySet().stream().forEach(kv -> Textures.loadTextureAsync(kv.getKey(), kv.getValue()));
 		
 		return true;
 	}

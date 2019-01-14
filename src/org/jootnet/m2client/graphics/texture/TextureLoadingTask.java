@@ -1,10 +1,10 @@
-package org.jootnet.m2client.texture.internal;
+package org.jootnet.m2client.graphics.texture;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import org.jootnet.m2client.texture.Texture;
+import com.github.jootnet.mir2.core.Texture;
 
 /**
  * 纹理加载任务

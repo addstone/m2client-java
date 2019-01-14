@@ -1,6 +1,6 @@
 package org.jootnet.m2client.graphics;
 
-import org.jootnet.m2client.texture.Texture;
+import com.github.jootnet.mir2.core.Texture;
 
 /**
  * 可绘制对象

@@ -1,4 +1,4 @@
-package org.jootnet.m2client.texture.internal;
+package org.jootnet.m2client.graphics.texture;
 
 import java.util.Iterator;
 import java.util.Stack;
