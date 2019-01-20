@@ -94,7 +94,7 @@ public class GamePanel extends JPanel implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
 		ctx.updateTime();
-		lblFPS.setText(String.format("地图名称: %s FPS:%d", map.name(), ctx.fps));
+		lblFPS.setText(String.format("地图名称: %s 游戏坐标：(%d, %d) FPS:%d", map.name(), map.roleX(), map.roleY(), ctx.fps));
 		repaint();
 	}
 	

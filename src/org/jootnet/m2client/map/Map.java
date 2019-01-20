@@ -140,6 +140,10 @@ public abstract class Map implements Drawable {
 	public boolean adjust(GraphicsContext ctx) {
 		if(mapBaseTex == null || mapBaseTex.getWidth() != ctx.getWidth() || mapBaseTex.getHeight() != ctx.getHeight()) {
 			mapBaseTex = new Texture(new byte[ctx.getWidth() * ctx.getHeight() * 3], (short)ctx.getWidth(), (short)ctx.getHeight());
+			moved = true;
+		}
+		if(mapTex != null && (mapTex.getWidth() != ctx.getWidth() || mapTex.getHeight() != ctx.getHeight())) {
+			mapTex = new Texture(new byte[ctx.getWidth() * ctx.getHeight() * 3], ctx.getWidth(), ctx.getHeight());
 		}
 		boolean baseCompleted = ilIdxs.keySet().parallelStream().filter(ilName -> ilName.toLowerCase().startsWith("tiles") || ilName.toLowerCase().startsWith("smtiles")).count() == 0; // 地图前两层不需每次重绘，使用缓冲
 		if(moved) {

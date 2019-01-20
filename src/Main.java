@@ -1,8 +1,13 @@
 
+import java.awt.FileDialog;
+import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -21,12 +26,12 @@ public class Main {
 		frame.setSize(1366, 768);
 		frame.setLocationRelativeTo(null);
 		//long startT = System.currentTimeMillis();
-		Map map = Maps.get("bsr02", "不知道");
+		Map map = Maps.get("0", "比奇");
 		//long endT = System.currentTimeMillis();
 		//System.out.println("map load use " + (endT - startT) + " ms");
-		map.move(205, 194);
+		map.move(342, 320);
 		JPanel gamePanel = new GamePanel(map);
-		gamePanel.setSize(1280, 720);
+		frame.setContentPane(gamePanel);
 		gamePanel.setLocation(0, 0);
 		frame.addKeyListener(new KeyListener() {
 			
@@ -50,11 +55,24 @@ public class Main {
 					map.move(map.roleX(), map.roleY() - 1);
 				} else if(e.getKeyCode() == KeyEvent.VK_DOWN) {
 					map.move(map.roleX(), map.roleY() + 1);
+				} else if(e.getKeyCode() == KeyEvent.VK_ENTER) {
+					BufferedImage image = new BufferedImage(gamePanel.getWidth(), gamePanel.getHeight(), BufferedImage.TYPE_INT_RGB);
+					Graphics2D g2 = image.createGraphics();
+					gamePanel.paint(g2);
+					try {
+						FileDialog fd = new FileDialog(frame, "另存为", FileDialog.SAVE);
+						fd.setFile("*.jpg");
+				        fd.setVisible(true);
+				        if(fd.getFile() != null) {
+							ImageIO.write(image, "jpeg", new File(fd.getDirectory(), fd.getFile()));
+				        }
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
 				}
 			}
 		});
 		frame.setLayout(null);
-		frame.add(gamePanel);
 		frame.setVisible(true);
 	}
 
